@@ -42,6 +42,7 @@ class Code : JFrame(TITLE), GLEventListener {
         println("Gl display")
         val gl = GLContext.getCurrentGL() as GL4
         gl.glUseProgram(renderingProgram);
+	gl.glPointSize(30f);
         gl.glDrawArrays(GL_POINTS, 0, 1);
     }
 
