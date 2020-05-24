@@ -6,3 +6,7 @@ group 'kifio.opengl'
 version '1.0-SNAPSHOT'
 
 mainClassName='CodeKt'
+
+dependencies {
+    implementation project(':common')
+}

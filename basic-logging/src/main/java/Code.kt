@@ -63,17 +63,8 @@ class Code : JFrame(TITLE), GLEventListener {
 
     private fun createShaderProgram(): Int {
         val gl = GLContext.getCurrentGL() as GL4
-        val vertexShaderSource =
-                arrayOf("#version 430 \n",
-                        "void main(void) \n",
-                        "{ gl_Position = vec4(0.0, 0.0, 0.0, 1.0); } \n")
-
-        val fragmentShaderSource = arrayOf(
-                "#version 430 \n",
-                "out vec4 color; \n",
-                "void main(void) \n",
-                "{ if (gl_FragCoord.x < 200) color = vec4(1.0, 0.0, 0.0, 1.0); else color = vec4(0.0, 0.0, 1.0, 1.0); } \n"
-        )
+        val vertexShaderSource = Common.readShaderSource("vert.shader")
+        val fragmentShaderSource = Common.readShaderSource("frag.shader")
 
         val vertexCompiled = IntArray(1)
         val fragmentCompiled = IntArray(1)
