@@ -26,7 +26,7 @@ class Code : JFrame(TITLE), GLEventListener {
     private val canvas = getCanvas()
 
     init {
-        setSize(600, 400)
+        setSize(400, 400)
         setLocation(200, 200)
         canvas.addGLEventListener(this)
         add(canvas)
@@ -42,7 +42,7 @@ class Code : JFrame(TITLE), GLEventListener {
         println("Gl display")
         val gl = GLContext.getCurrentGL() as GL4
         gl.glUseProgram(renderingProgram);
-	gl.glPointSize(30f);
+	    gl.glPointSize(30f);
         gl.glDrawArrays(GL_POINTS, 0, 1);
     }
 
@@ -69,7 +69,7 @@ class Code : JFrame(TITLE), GLEventListener {
             "#version 430 \n",
             "out vec4 color; \n",
             "void main(void) \n",
-            "{ color = vec4(1.0, 0.0, 0.0, 1.0); } \n"
+            "{ if (gl_FragCoord.x < 200) color = vec4(1.0, 0.0, 0.0, 1.0); else color = vec4(0.0, 0.0, 1.0, 1.0); } \n"
         )
 
         val vertexShader = gl.glCreateShader(GL_VERTEX_SHADER)

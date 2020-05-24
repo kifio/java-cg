@@ -1,0 +1,174 @@
+import com.jogamp.opengl.*
+import com.jogamp.opengl.GL.GL_NO_ERROR
+import com.jogamp.opengl.GL.GL_POINTS
+import com.jogamp.opengl.GL2ES2.*
+import com.jogamp.opengl.GL4.GL_FRAGMENT_SHADER
+import com.jogamp.opengl.GL4.GL_VERTEX_SHADER
+import com.jogamp.opengl.awt.GLCanvas
+import com.jogamp.opengl.glu.GLU
+import com.sun.org.apache.xpath.internal.operations.Bool
+import javax.swing.JFrame
+
+
+private const val TITLE = "Chapter2 - program2"
+
+fun main(args: Array<String>) {
+    Code()
+}
+
+// Workaround for black screen on OS X
+private fun getCanvas(): GLCanvas {
+    return GLCanvas()
+}
+
+class Code : JFrame(TITLE), GLEventListener {
+
+    private var renderingProgram = -1
+    private val vao = intArrayOf(1)
+
+    private val canvas = getCanvas()
+
+    init {
+        setSize(400, 400)
+        setLocation(200, 200)
+        canvas.addGLEventListener(this)
+        add(canvas)
+        isVisible = true
+    }
+
+    override fun reshape(p0: GLAutoDrawable?, p1: Int, p2: Int, p3: Int, p4: Int) {
+        println("Gl reshape")
+    }
+
+    // Black screen on os x
+    override fun display(p0: GLAutoDrawable?) {
+        println("Gl display")
+        val gl = GLContext.getCurrentGL() as GL4
+        gl.glUseProgram(renderingProgram);
+        gl.glPointSize(30f);
+        gl.glDrawArrays(GL_POINTS, 0, 1);
+    }
+
+    override fun init(p0: GLAutoDrawable?) {
+        println("Gl init")
+        val gl = GLContext.getCurrentGL() as GL4
+        renderingProgram = createShaderProgram()
+        gl.glGenVertexArrays(vao.size, vao, 0);
+        gl.glBindVertexArray(vao[0]);
+    }
+
+    override fun dispose(p0: GLAutoDrawable?) {
+        println("Gl dispose")
+    }
+
+    private fun createShaderProgram(): Int {
+        val gl = GLContext.getCurrentGL() as GL4
+        val vertexShaderSource =
+                arrayOf("#version 430 \n",
+                        "void main(void) \n",
+                        "{ gl_Position = vec4(0.0, 0.0, 0.0, 1.0); } \n")
+
+        val fragmentShaderSource = arrayOf(
+                "#version 430 \n",
+                "out vec4 color; \n",
+                "void main(void) \n",
+                "{ if (gl_FragCoord.x < 200) color = vec4(1.0, 0.0, 0.0, 1.0); else color = vec4(0.0, 0.0, 1.0, 1.0); } \n"
+        )
+
+        val vertexCompiled = IntArray(1)
+        val fragmentCompiled = IntArray(1)
+        val linked = IntArray(1)
+
+        val vertexShader = gl.glCreateShader(GL_VERTEX_SHADER)
+        gl.glShaderSource(vertexShader, vertexShaderSource.size, vertexShaderSource, null, 0)    // count - lines of code
+        gl.glCompileShader(vertexShader)
+
+        checkOpenGlError()
+        gl.glGetShaderiv(vertexShader, GL_COMPILE_STATUS, vertexCompiled, 0)
+        if (vertexCompiled[0] == 1) {
+            println("Vertex compilation success")
+        } else {
+            println("Vertex compilation failed")
+            printShaderLog(vertexShader)
+        }
+
+        val fragmentShader = gl.glCreateShader(GL_FRAGMENT_SHADER)
+        gl.glShaderSource(fragmentShader, fragmentShaderSource.size, fragmentShaderSource, null, 0)    // count - lines of code
+        gl.glCompileShader(fragmentShader)
+
+        checkOpenGlError()
+        gl.glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, fragmentCompiled, 0)
+        if (fragmentCompiled[0] == 1) {
+            println("Fragment compilation success")
+        } else {
+            println("Fragment compilation failed")
+            printShaderLog(fragmentShader)
+        }
+
+        val program = gl.glCreateProgram()
+        gl.glAttachShader(program, vertexShader)
+        gl.glAttachShader(program, fragmentShader)
+        gl.glLinkProgram(program)
+
+        checkOpenGlError()
+        gl.glGetProgramiv(program, GL_LINK_STATUS, linked, 0)
+        if (linked[0] == 1) {
+            println("Linking success")
+        } else {
+            println("Linking failed")
+            printProgramLog(program)
+        }
+
+        gl.glDeleteShader(vertexShader)
+        gl.glDeleteShader(fragmentShader)
+
+        return program
+    }
+
+    private fun printShaderLog(shader: Int) {
+        val gl = GLContext.getCurrentGL() as GL4
+        val len = IntArray(1)
+        val chWrittn = IntArray(1)
+        var log: ByteArray? = null
+
+        gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, len, 0)
+        if (len[0] > 0) {
+            log = ByteArray(len[0])
+            gl.glGetShaderInfoLog(shader, len[0], chWrittn, 0, log, 0)
+            println("Shader info log: ")
+            for (i in log) {
+                print(i.toChar())
+            }
+        }
+    }
+
+    private fun printProgramLog(prog: Int) {
+        val gl = GLContext.getCurrentGL() as GL4
+        var len = IntArray(1)
+        var chWrittn = IntArray(1)
+        var log: ByteArray? = null
+
+        gl.glGetProgramiv(prog, GL_INFO_LOG_LENGTH, len, 0)
+        if (len[0] > 0) {
+            log = ByteArray(len[0])
+            gl.glGetProgramInfoLog(prog, len[0], chWrittn, 0, log, 0)
+            println("Program info log: ")
+            for (i in log) {
+                print(i.toChar())
+            }
+        }
+    }
+
+    private fun checkOpenGlError(): Boolean {
+        val gl = GLContext.getCurrentGL() as GL4
+        var foundError = false
+        val glu = GLU()
+        var glErr = gl.glGetError()
+        while (glErr != GL_NO_ERROR) {
+            println("glError: ${glu.gluErrorString(glErr)}")
+            foundError = true
+            glErr = gl.glGetError()
+        }
+        return foundError
+    }
+}

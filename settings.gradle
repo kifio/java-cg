@@ -1,3 +1,2 @@
 rootProject.name = 'java-cg'
-include 'basic-shaders', 'basic-canvas'
-
+include 'basic-shaders', 'basic-canvas', 'basic-logging'
