@@ -5,7 +5,7 @@ import com.jogamp.opengl.GL4.GL_VERTEX_SHADER
 import com.jogamp.opengl.awt.GLCanvas
 import javax.swing.JFrame
 
-private const val TITLE = "Chapter2 - program2"
+private const val TITLE = "Chapter2 - program3"
 
 fun main(args: Array<String>) {
     Code()
@@ -42,6 +42,7 @@ class Code : JFrame(TITLE), GLEventListener {
         val gl = GLContext.getCurrentGL() as GL4
         gl.glUseProgram(renderingProgram);
 	    gl.glPointSize(30f);
+        Common.clearBuffer(gl)
         gl.glDrawArrays(GL_POINTS, 0, 1);
     }
 

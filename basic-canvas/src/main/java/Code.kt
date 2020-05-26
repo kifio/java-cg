@@ -35,14 +35,7 @@ class Code : JFrame(TITLE), GLEventListener {
 
     override fun display(p0: GLAutoDrawable?) {
         println("Gl display")
-        val gl = GLContext.getCurrentGL() as GL4
-
-        gl.glClearBufferfv(
-            GL_COLOR, 0,
-            Buffers.newDirectFloatBuffer(
-                floatArrayOf(1.0f, 1.0f, 0.0f, 1.0f)
-            )
-        )
+        Common.clearBuffer(GLContext.getCurrentGL() as GL4)
     }
 
     override fun init(p0: GLAutoDrawable?) {

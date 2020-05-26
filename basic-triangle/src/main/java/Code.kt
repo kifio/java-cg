@@ -6,9 +6,11 @@ import com.jogamp.opengl.GL4.GL_FRAGMENT_SHADER
 import com.jogamp.opengl.GL4.GL_VERTEX_SHADER
 import com.jogamp.opengl.awt.GLCanvas
 import com.jogamp.opengl.glu.GLU
+import com.sun.org.apache.xpath.internal.operations.Bool
 import javax.swing.JFrame
 
-private const val TITLE = "Chapter2 - program4"
+
+private const val TITLE = "Chapter2 - program2"
 
 fun main(args: Array<String>) {
     Code()
@@ -27,7 +29,7 @@ class Code : JFrame(TITLE), GLEventListener {
     private val canvas = getCanvas()
 
     init {
-        setSize(600, 300)
+        setSize(400, 400)
         setLocation(200, 200)
         canvas.addGLEventListener(this)
         add(canvas)
@@ -45,7 +47,7 @@ class Code : JFrame(TITLE), GLEventListener {
         gl.glUseProgram(renderingProgram);
         gl.glPointSize(30f);
         Common.clearBuffer(gl)
-        gl.glDrawArrays(GL_POINTS, 0, 1);
+        gl.glDrawArrays(GL_TRIANGLES, 0, 3);
     }
 
     override fun init(p0: GLAutoDrawable?) {

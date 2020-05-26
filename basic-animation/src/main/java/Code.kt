@@ -6,9 +6,12 @@ import com.jogamp.opengl.GL4.GL_FRAGMENT_SHADER
 import com.jogamp.opengl.GL4.GL_VERTEX_SHADER
 import com.jogamp.opengl.awt.GLCanvas
 import com.jogamp.opengl.glu.GLU
+import com.jogamp.opengl.util.FPSAnimator
+import com.sun.org.apache.xpath.internal.operations.Bool
 import javax.swing.JFrame
 
-private const val TITLE = "Chapter2 - program4"
+
+private const val TITLE = "Chapter2 - program6"
 
 fun main(args: Array<String>) {
     Code()
@@ -26,12 +29,16 @@ class Code : JFrame(TITLE), GLEventListener {
 
     private val canvas = getCanvas()
 
+    private var x = -0.0F
+    private var inc = 0.01F
+
     init {
-        setSize(600, 300)
+        setSize(400, 400)
         setLocation(200, 200)
         canvas.addGLEventListener(this)
         add(canvas)
         isVisible = true
+        FPSAnimator(canvas, 50).start()
     }
 
     override fun reshape(p0: GLAutoDrawable?, p1: Int, p2: Int, p3: Int, p4: Int) {
@@ -43,9 +50,18 @@ class Code : JFrame(TITLE), GLEventListener {
         println("Gl display")
         val gl = GLContext.getCurrentGL() as GL4
         gl.glUseProgram(renderingProgram);
-        gl.glPointSize(30f);
         Common.clearBuffer(gl)
-        gl.glDrawArrays(GL_POINTS, 0, 1);
+        gl.glDrawArrays(GL_TRIANGLES, 0, 3)
+
+        x += inc
+
+        if (x > 1F || x < -1F) {
+            inc = -inc
+        }
+
+        gl.glProgramUniform1f(renderingProgram,
+            gl.glGetUniformLocation(renderingProgram, "offset"),
+            x)
     }
 
     override fun init(p0: GLAutoDrawable?) {
