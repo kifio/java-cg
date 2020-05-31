@@ -3,13 +3,14 @@ import com.jogamp.common.nio.Buffers
 import com.jogamp.opengl.*
 import com.jogamp.opengl.GL.GL_NO_ERROR
 import com.jogamp.opengl.GL2ES2.*
-import com.jogamp.opengl.GL4.GL_FRAGMENT_SHADER
-import com.jogamp.opengl.GL4.GL_VERTEX_SHADER
+import com.jogamp.opengl.GL4.*
 import com.jogamp.opengl.awt.GLCanvas
 import com.jogamp.opengl.glu.GLU
+import com.jogamp.opengl.util.FPSAnimator
 import graphicslib3D.GLSLUtils
 import mathlib3D.Matrix3D
 import javax.swing.JFrame
+import kotlin.math.sin
 
 
 private const val TITLE = "Chapter4 - program1"
@@ -42,6 +43,7 @@ class Code : JFrame(TITLE), GLEventListener {
         canvas.addGLEventListener(this)
         add(canvas)
         isVisible = true
+        FPSAnimator(canvas, 50).start()
     }
 
     override fun init(p0: GLAutoDrawable?) {
@@ -49,7 +51,7 @@ class Code : JFrame(TITLE), GLEventListener {
         renderingProgram = createShaderProgram()
         setupVertices()
         // Aspect ratio matches screen window
-        val aspect = (canvas.width / canvas.height).toFloat()
+        val aspect = (canvas.width.toFloat() / canvas.height.toFloat())
         pMat = Common.perspective(60f, aspect, 0.1f, 1000f)
         gl.glGenVertexArrays(vao.size, vao, 0);
         gl.glBindVertexArray(vao[0]);
@@ -61,6 +63,12 @@ class Code : JFrame(TITLE), GLEventListener {
         gl.glClear(GL.GL_DEPTH_BUFFER_BIT)
         gl.glUseProgram(renderingProgram)
 
+        val bkg = floatArrayOf(0.0f, 0.0f, 0.0f, 1.0f)
+        val bkgBuffer = Buffers.newDirectFloatBuffer(bkg)
+        gl.glClearBufferfv(GL4.GL_COLOR, 0, bkgBuffer)
+
+        val timeFactor = (System.currentTimeMillis() % 3600000) / 10000.0
+
         // view matrix
         val vMat = Matrix3D()
         vMat.translate(-cameraX, -cameraY, -cameraZ)
@@ -70,20 +78,28 @@ class Code : JFrame(TITLE), GLEventListener {
         mMat.translate(cubeLocX, cubeLocY, cubeLocZ)
 
         // view model matrix
-        val mvMat = Matrix3D()
+    /*    val mvMat = Matrix3D()
         mvMat.concatenate(vMat)
-        mvMat.concatenate(mMat)
+        mvMat.concatenate(mMat) */
 
-        val mvLoc = gl.glGetUniformLocation(renderingProgram, "mv_matrix")
+        val mLoc = gl.glGetUniformLocation(renderingProgram, "m_matrix")
+        val vLoc = gl.glGetUniformLocation(renderingProgram, "v_matrix")
+        val timeFactorLocation = gl.glGetUniformLocation(renderingProgram, "tf")
         val projLoc = gl.glGetUniformLocation(renderingProgram, "proj_matrix")
 
         gl.glUniformMatrix4fv(projLoc, 1, false,
             pMat.values.map { it.toFloat() }.toFloatArray(),
             0)
 
-        gl.glUniformMatrix4fv(mvLoc, 1, false,
-            mvMat.values.map { it.toFloat() }.toFloatArray(),
+        gl.glUniformMatrix4fv(mLoc, 1, false,
+            mMat.values.map { it.toFloat() }.toFloatArray(),
             0)
+
+        gl.glUniformMatrix4fv(vLoc, 1, false,
+                vMat.values.map { it.toFloat() }.toFloatArray(),
+                0)
+
+        gl.glUniform1f(timeFactorLocation, timeFactor.toFloat())
 
         gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo[0])
         gl.glVertexAttribPointer(0, 3, GL.GL_FLOAT, false, 0, 0)
@@ -91,7 +107,7 @@ class Code : JFrame(TITLE), GLEventListener {
 
         gl.glEnable(GL.GL_DEPTH_TEST)
         gl.glDepthFunc(GL.GL_LEQUAL)
-        gl.glDrawArrays(GL_TRIANGLES, 0, 36)
+        gl.glDrawArraysInstanced(GL_TRIANGLES, 0, 36, 24)
     }
 
     override fun reshape(p0: GLAutoDrawable?, p1: Int, p2: Int, p3: Int, p4: Int) {
