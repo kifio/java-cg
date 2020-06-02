@@ -14,7 +14,7 @@ import java.lang.RuntimeException
 import javax.swing.JFrame
 
 
-private const val TITLE = "Chapter4 - program1"
+private const val TITLE = "Textures"
 
 fun main(args: Array<String>) {
     Code()
@@ -30,11 +30,11 @@ class Code : JFrame(TITLE), GLEventListener {
 
     private var cameraX = 0.0
     private var cameraY = 0.0
-    private var cameraZ = 10.0
+    private var cameraZ = 4.0
 
-    private var pyrLocX = 1.0
+    private var pyrLocX = 0.0
     private var pyrLocY = 0.0
-    private var pyrLocZ = 2.0
+    private var pyrLocZ = 0.0
 
     private val glslUtils = GLSLUtils()
     private lateinit var pMat: Matrix3D

@@ -1,19 +1,20 @@
-import Common.perspective
 import com.jogamp.common.nio.Buffers
 import com.jogamp.opengl.*
 import com.jogamp.opengl.GL.GL_NO_ERROR
-import com.jogamp.opengl.GL2ES2.*
 import com.jogamp.opengl.GL4.*
 import com.jogamp.opengl.awt.GLCanvas
 import com.jogamp.opengl.glu.GLU
 import com.jogamp.opengl.util.FPSAnimator
+import com.jogamp.opengl.util.texture.Texture
+import com.jogamp.opengl.util.texture.TextureIO
 import graphicslib3D.GLSLUtils
 import mathlib3D.Matrix3D
+import java.io.File
+import java.lang.RuntimeException
 import javax.swing.JFrame
-import kotlin.math.sin
 
 
-private const val TITLE = "Cubes"
+private const val TITLE = "Grayscale"
 
 fun main(args: Array<String>) {
     Code()
@@ -24,19 +25,20 @@ class Code : JFrame(TITLE), GLEventListener {
     private var renderingProgram = -1
     private val canvas = GLCanvas()
 
-    private val vao = intArrayOf(1)
-    private val vbo = intArrayOf(2)
+    private val vao = IntArray(1)
+    private val vbo = IntArray(2)
 
     private var cameraX = 0.0
     private var cameraY = 0.0
-    private var cameraZ = 8.0
+    private var cameraZ = 3.0
 
-    private var cubeLocX = 0.0
-    private var cubeLocY = -2.0
-    private var cubeLocZ = 0.0
+    private var locX = 0.0
+    private var locY = 0.0
+    private var locZ = 0.0
 
     private val glslUtils = GLSLUtils()
     private lateinit var pMat: Matrix3D
+    private var texture: Int = 0
 
     init {
         setSize(600, 600)
@@ -49,6 +51,8 @@ class Code : JFrame(TITLE), GLEventListener {
     override fun init(p0: GLAutoDrawable?) {
         val gl = GLContext.getCurrentGL() as GL4
         renderingProgram = createShaderProgram()
+        val photo = loadTexture("IMG_3620.JPG")
+        texture = photo.textureObject
         setupVertices()
         // Aspect ratio matches screen window
         val aspect = (canvas.width.toFloat() / canvas.height.toFloat())
@@ -67,47 +71,49 @@ class Code : JFrame(TITLE), GLEventListener {
         val bkgBuffer = Buffers.newDirectFloatBuffer(bkg)
         gl.glClearBufferfv(GL4.GL_COLOR, 0, bkgBuffer)
 
-        val timeFactor = (System.currentTimeMillis() % 3600000) / 10000.0
-
         // view matrix
         val vMat = Matrix3D()
         vMat.translate(-cameraX, -cameraY, -cameraZ)
 
         // model matrix
         val mMat = Matrix3D()
-        mMat.translate(cubeLocX, cubeLocY, cubeLocZ)
+        mMat.translate(locX, locY, locZ)
 
         // view model matrix
-    /*    val mvMat = Matrix3D()
+        val mvMat = Matrix3D()
         mvMat.concatenate(vMat)
-        mvMat.concatenate(mMat) */
+        mvMat.concatenate(mMat)
 
-        val mLoc = gl.glGetUniformLocation(renderingProgram, "m_matrix")
-        val vLoc = gl.glGetUniformLocation(renderingProgram, "v_matrix")
-        val timeFactorLocation = gl.glGetUniformLocation(renderingProgram, "tf")
+        val mvLoc = gl.glGetUniformLocation(renderingProgram, "mv_matrix")
         val projLoc = gl.glGetUniformLocation(renderingProgram, "proj_matrix")
+        val timeloc = gl.glGetUniformLocation(renderingProgram, "time")
 
         gl.glUniformMatrix4fv(projLoc, 1, false,
-            pMat.values.map { it.toFloat() }.toFloatArray(),
-            0)
-
-        gl.glUniformMatrix4fv(mLoc, 1, false,
-            mMat.values.map { it.toFloat() }.toFloatArray(),
-            0)
-
-        gl.glUniformMatrix4fv(vLoc, 1, false,
-                vMat.values.map { it.toFloat() }.toFloatArray(),
+                pMat.values.map { it.toFloat() }.toFloatArray(),
                 0)
 
-        gl.glUniform1f(timeFactorLocation, timeFactor.toFloat())
+        gl.glUniformMatrix4fv(mvLoc, 1, false,
+                mvMat.values.map { it.toFloat() }.toFloatArray(),
+                0)
 
+        gl.glProgramUniform1f(renderingProgram, timeloc, System.currentTimeMillis().toFloat())
+
+        // Activate buffer with vertices
         gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo[0])
         gl.glVertexAttribPointer(0, 3, GL.GL_FLOAT, false, 0, 0)
         gl.glEnableVertexAttribArray(0)
 
+        // Activate buffer with texture coordinates
+        gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo[1])
+        gl.glVertexAttribPointer(1, 2, GL.GL_FLOAT, false, 0, 0)
+        gl.glEnableVertexAttribArray(1)
+
+        gl.glActiveTexture(GL.GL_TEXTURE0)
+        gl.glBindTexture(GL_TEXTURE_2D, texture)
+
         gl.glEnable(GL.GL_DEPTH_TEST)
         gl.glDepthFunc(GL.GL_LEQUAL)
-        gl.glDrawArraysInstanced(GL_TRIANGLES, 0, 36, 24)
+        gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
     }
 
     override fun reshape(p0: GLAutoDrawable?, p1: Int, p2: Int, p3: Int, p4: Int) {
@@ -121,52 +127,32 @@ class Code : JFrame(TITLE), GLEventListener {
     private fun setupVertices() {
         val gl = GLContext.getCurrentGL() as GL4
 
-        // 36 vertices of the 12 triangles making up a 2 x 2 x 2 cube centered at the origin
-        val vertexPositions = floatArrayOf(
-            -1.0f, 1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f, 1.0f, -1.0f,
-            -1.0f, 1.0f,-1.0f, -1.0f,
+        val verticesPositions = floatArrayOf(
+            -1f,  1f, 1f,
+            -1f, -1f, 1f,
+            1f,  1f, 1f,
+            1f, -1f, 1f
+        )
 
-            1.0f, 1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, 1.0f, -1.0f,
-            -1.0f, 1.0f, -1.0f, 1.0f,
-
-            1.0f, 1.0f, -1.0f, 1.0f,
-            -1.0f, 1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f, -1.0f,
-
-            1.0f, -1.0f, 1.0f, -1.0f,
-            -1.0f, 1.0f, 1.0f, 1.0f,
-            1.0f, -1.0f,-1.0f, 1.0f,
-
-            -1.0f, 1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f, -1.0f,
-
-            -1.0f, 1.0f, 1.0f, -1.0f,
-            -1.0f, -1.0f, -1.0f, 1.0f,
-            -1.0f, -1.0f, 1.0f, 1.0f,
-
-            -1.0f, -1.0f, 1.0f, 1.0f,
-            -1.0f, 1.0f, 1.0f, -1.0f,
-            -1.0f, 1.0f,-1.0f, -1.0f,
-
-            -1.0f, -1.0f, -1.0f, -1.0f,
-            -1.0f, 1.0f, -1.0f, 1.0f,
-            -1.0f, 1.0f, 1.0f, -1.0f,
-
-            1.0f, 1.0f, 1.0f, 1.0f,
-            1.0f,1.0f, -1.0f, 1.0f,
-            1.0f, -1.0f, 1.0f, -1.0f
+        val texturePositions = floatArrayOf(
+                0f,  1f,
+                0f, 0f,
+                1f,  1f,
+                1f, 0f
         )
 
         gl.glGenVertexArrays(vao.size, vao, 0)
         gl.glBindVertexArray(vao[0])
         gl.glGenBuffers(vbo.size, vbo, 0)
-        gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo[0])
 
-        val vertBuf = Buffers.newDirectFloatBuffer(vertexPositions)
-        gl.glBufferData(GL.GL_ARRAY_BUFFER, vertBuf.limit() * 4L, vertBuf, GL.GL_STATIC_DRAW)
+        gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo[0])
+        val verticesBuf = Buffers.newDirectFloatBuffer(verticesPositions)
+        gl.glBufferData(GL.GL_ARRAY_BUFFER, verticesBuf.limit() * 4L, verticesBuf, GL.GL_STATIC_DRAW)
+
+        gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo[1])
+        val textureBuf = Buffers.newDirectFloatBuffer(texturePositions)
+        gl.glBufferData(GL.GL_ARRAY_BUFFER, textureBuf.limit() * 4L, textureBuf, GL.GL_STATIC_DRAW)
+
     }
 
     private fun createShaderProgram(): Int {
@@ -269,5 +255,14 @@ class Code : JFrame(TITLE), GLEventListener {
             glErr = gl.glGetError()
         }
         return foundError
+    }
+
+    private fun loadTexture(path: String): Texture {
+        try {
+            return TextureIO.newTexture(File(path), false)
+        } catch (e: java.io.IOException) {
+            e.printStackTrace()
+            throw RuntimeException("Texture $path not found")
+        }
     }
 }

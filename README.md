@@ -4,6 +4,8 @@ Samples from [this book](http://www.cosmic-rays.ru/books62/2016Scott.pdf) and ex
 
 There are some issues with using Open GL on OS X, but it's working perfect on Ubuntu.
 
+**Samples:**
+
 **Credits:**
 
 Bricks texture by [Messala Ciulla](https://unsplash.com/@messalaciulla) on Unsplash
