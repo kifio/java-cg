@@ -6,6 +6,11 @@ There are some issues with using Open GL on OS X, but it's working perfect on Ub
 
 **Samples:**
 
+![Cubes](https://github.com/kifio/java-cg/blob/master/screenshots/cubes.png?raw=true)
+![Texture](https://github.com/kifio/java-cg/blob/master/screenshots/pyramid.png?raw=true)
+![Grayscale](https://github.com/kifio/java-cg/blob/master/screenshots/grayscale.png?raw=true)
+
+
 **Credits:**
 
 Bricks texture by [Messala Ciulla](https://unsplash.com/@messalaciulla) on Unsplash
